@@ -1,0 +1,20 @@
+{
+    "Batteries.csv": {
+        "dimensions": {
+            "dimension_1": "model_name",
+            "dimension_2": "parent_class_id",
+            "dimension_3": "Generation (GWh)",
+            "value": "Generation (GWh)"
+        },
+        "new_file_name": "gen_h"
+    },
+    "Generators.csv": {
+        "dimensions": {
+            "dimension_1": "model_name",
+            "dimension_2": "parent_class_id",
+            "dimension_3": "parent_id",
+            "value": "Generation (GWh)"
+        },
+        "new_file_name": "gen_l"
+    }
+}
