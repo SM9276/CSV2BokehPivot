@@ -37,8 +37,7 @@ def list_all_csv_files_with_repeats(folder):
 
 def map_columns(old_csv):
     df = pd.read_csv(old_csv)
-    columns = df.columns.tolist()
-    return columns
+    return df.columns.tolist()
 
 def mapping_mode():
     configurations = load_configurations()
@@ -71,7 +70,7 @@ def mapping_mode():
         
         if user_input.lower() == 'constant':
             constant_value = input(f"Enter constant value for dimension {dimension_count}: ")
-            dimensions[f"dimension_{dimension_count}"] = constant_value
+            dimensions[f"Dim{dimension_count}"] = constant_value
             dimension_count += 1
         elif user_input.lower() == 'value':
             break
@@ -79,7 +78,7 @@ def mapping_mode():
             try:
                 dim_col = int(user_input) - 1
                 if 0 <= dim_col < len(columns):
-                    dimensions[f"dimension_{dimension_count}"] = columns[dim_col]
+                    dimensions[f"Dim{dimension_count}"] = columns[dim_col]
                     dimension_count += 1
                 else:
                     print("Invalid selection. Please try again.")
@@ -92,7 +91,7 @@ def mapping_mode():
     
     value_column = int(input("Select column for values by number: ")) - 1
     if 0 <= value_column < len(columns):
-        dimensions["value"] = columns[value_column]
+        dimensions["Val"] = columns[value_column]
     else:
         print("Invalid selection. No value column selected.")
         return
@@ -102,9 +101,9 @@ def mapping_mode():
         print("Invalid file name. Configuration not saved.")
         return
     
-    configurations[selected_file_name] = {
-        "dimensions": dimensions,
-        "new_file_name": new_file_name
+    configurations[new_file_name] = {
+        "original_file": selected_file_name,
+        "dimensions": dimensions
     }
     
     save_configurations(configurations)
@@ -114,57 +113,49 @@ def execute_mode():
     configurations = load_configurations()
     all_csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
     
-    # Create a reverse mapping from output file names to their configurations
-    config_by_file = {}
-    for file_name, config in configurations.items():
-        config_by_file[file_name] = config
-    
-    # Process all CSV files
     for full_path in all_csv_files:
         file_name = os.path.basename(full_path)
-        if file_name in config_by_file:
-            config = config_by_file[file_name]
-            df = pd.read_csv(full_path)
-            new_df = pd.DataFrame()
-            dimensions = config["dimensions"]
-            
-            # Add dimensions to new DataFrame
-            for key in dimensions:
-                if key.startswith("dimension"):
-                    column_name = dimensions[key]
-                    if isinstance(column_name, str):
-                        # If the dimension is a constant string, add it directly
-                        new_df[key] = [column_name] * len(df)
-                    else:
-                        # If the dimension is a column name, map it
+        
+        # Iterate over all configurations for the current file
+        for new_file_name, config in configurations.items():
+            if config["original_file"] == file_name:
+                df = pd.read_csv(full_path)
+                new_df = pd.DataFrame()
+                dimensions = config["dimensions"]
+                
+                # Add dimensions to new DataFrame
+                for key in dimensions:
+                    if key.startswith("Dim"):
+                        column_name = dimensions[key]
                         if column_name in df.columns:
                             new_df[key] = df[column_name]
                         else:
-                            print(f"Warning: Column '{column_name}' not found in '{file_name}'.")
+                            # Handle constant string
+                            new_df[key] = [column_name] * len(df)
 
-            # Add value column to new DataFrame
-            if "value" in dimensions:
-                value_col = dimensions["value"]
-                if value_col in df.columns:
-                    new_df['Value'] = df[value_col]
-                else:
-                    print(f"Warning: Column '{value_col}' not found in '{file_name}'.")
+                # Add value column to new DataFrame
+                if "Val" in dimensions:
+                    value_col = dimensions["Val"]
+                    if value_col in df.columns:
+                        new_df['Val'] = df[value_col]
+                    else:
+                        # Handle constant string
+                        new_df['Val'] = [value_col] * len(df)
 
-            # Generate new CSV file
-            new_file_name = config["new_file_name"]
-            
-            # Determine the output folder structure
-            original_folder = os.path.dirname(full_path)
-            relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
-            model_folder = os.path.basename(relative_folder)
-            output_folder = os.path.join('runs', model_folder, 'outputs')
-            
-            new_csv = os.path.join(output_folder, f"{new_file_name}.csv")
-            os.makedirs(os.path.dirname(new_csv), exist_ok=True)
-            new_df.to_csv(new_csv, index=False)
-            print(f"New CSV file created: {new_csv}")
-        else:
-            print(f"Warning: Configuration for '{file_name}' but file not found in the inputs.")
+                # Determine the output folder structure
+                original_folder = os.path.dirname(full_path)
+                relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
+                model_folder = os.path.basename(relative_folder)
+                output_folder = os.path.join(OUTPUT_FOLDER, model_folder, 'outputs')
+                
+                new_csv = os.path.join(output_folder, f"{new_file_name}.csv")
+                os.makedirs(os.path.dirname(new_csv), exist_ok=True)
+                new_df.to_csv(new_csv, index=False)
+                print(f"New CSV file created: {new_csv}")
+
+        # This part handles cases where there is no configuration for the current file
+        if not any(config["original_file"] == file_name for config in configurations.values()):
+            print(f"Warning: Configuration for '{file_name}' not found in the configurations.")
 
 
 def main():

@@ -24,7 +24,7 @@ echo Activating Miniforge...
 call %INSTALL_PATH%\condabin\conda.bat activate
 
 :: Specify the environment name and the YAML file name
-set ENV_NAME=xml2csv
+set ENV_NAME=csv2bokehpivot
 set YAML_FILE=environment.yaml
 
 :: Create conda environment from YAML file

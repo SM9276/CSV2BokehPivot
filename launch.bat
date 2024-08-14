@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 set INSTALL_PATH=%LOCALAPPDATA%\Miniforge3
 
 :: Set the name of the conda environment
-set ENV_NAME=xml2csv
+set ENV_NAME=csv2bokehpivot
 
 :: Set the paths to your Python script
 set PYTHON_SCRIPT=CSV2BokehPivot.py
