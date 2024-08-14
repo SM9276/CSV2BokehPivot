@@ -1,0 +1,50 @@
+2023-09-08 15:59:30,273 - Starting 2009
+2023-09-08 15:59:30,285 - Starting 2010
+2023-09-08 15:59:30,381 - Starting 2012
+2023-09-08 15:59:30,576 - Starting 2014
+2023-09-08 15:59:30,793 - Starting 2016
+2023-09-08 15:59:31,065 - Starting 2018
+2023-09-08 15:59:31,412 - Starting 2020
+2023-09-08 15:59:31,758 - Starting 2022
+2023-09-08 15:59:32,139 - Starting 2024
+2023-09-08 15:59:32,463 - Starting 2026
+2023-09-08 15:59:32,822 - Starting 2028
+2023-09-08 15:59:33,224 - Starting 2030
+2023-09-08 15:59:33,661 - Starting 2032
+2023-09-08 15:59:34,137 - Starting 2034
+2023-09-08 15:59:34,656 - Starting 2036
+2023-09-08 15:59:35,204 - Starting 2038
+2023-09-08 15:59:35,796 - Starting 2040
+2023-09-08 15:59:36,447 - Starting 2042
+2023-09-08 15:59:37,191 - Starting 2044
+2023-09-08 15:59:37,981 - Starting 2046
+2023-09-08 15:59:38,826 - Starting 2048
+2023-09-08 15:59:39,749 - Starting 2050
+2023-09-08 15:59:40,684 - Final Capacity check (MW):
+2023-09-08 15:59:40,685 - final cap in df_sc: 212.89332264904442
+2023-09-08 15:59:40,688 - Final cap.csv: 212.893322649044
+2023-09-08 15:59:40,688 - Difference (error): 4.263256414560601e-13
+2023-09-08 15:59:40,689 - Calculated capacity from investment and retirement input: 212.8933226490442
+2023-09-08 15:59:40,689 - Cumulative inv_rsc: 1268.6273226490446
+2023-09-08 15:59:40,690 - Cumulative retirements: 1095.5340000000003
+2023-09-08 15:59:40,690 - Cumulative inv_refurb: 39.8
+2023-09-08 15:59:40,696 - Outputting data for dupv...
+2023-09-08 15:59:41,054 - Running reeds_to_rev for csp
+2023-09-08 15:59:42,028 - Creating converter from 3 to 5
+2023-09-08 15:59:44,192 - ***Error for csp...
+Traceback (most recent call last):
+  File "E:\agiovann\ReEDS-2.0\hourlize\reeds_to_rev.py", line 671, in <module>
+    reeds_to_rev(revRow, args.run_folder, args.priority, args.reduced_only, args.reedspath)
+  File "E:\agiovann\ReEDS-2.0\hourlize\reeds_to_rev.py", line 588, in reeds_to_rev
+    df_sc_out = get_supply_curve(reedspath, run_folder, sc_file, revData.tech, cost_col,
+  File "E:\agiovann\ReEDS-2.0\hourlize\reeds_to_rev.py", line 203, in get_supply_curve
+    df_inv[['tech_cat', 'class']] = df_inv['tech'].str.split('_', 1, expand=True)
+  File "E:\agiovann\.conda\envs\reeds\lib\site-packages\pandas\core\frame.py", line 3600, in __setitem__
+    self._setitem_array(key, value)
+  File "E:\agiovann\.conda\envs\reeds\lib\site-packages\pandas\core\frame.py", line 3639, in _setitem_array
+    check_key_length(self.columns, key, value)
+  File "E:\agiovann\.conda\envs\reeds\lib\site-packages\pandas\core\indexers.py", line 428, in check_key_length
+    raise ValueError("Columns must be same length as key")
+ValueError: Columns must be same length as key
+
+2023-09-08 15:59:44,216 - Completed reeds_to_rev!
