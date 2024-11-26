@@ -3,9 +3,10 @@
         "original_file": "Emissions.csv",
         "dimensions": {
             "Dim1": "collection_name",
-            "Dim2": "year",
-            "Dim3": "hour",
-            "Dim4": "month",
+            "Year": "year",
+            "Month": "month",
+            "Day": 31,
+            "Hour": "hour",
             "Val": "Production (ton)"
         }
     }
