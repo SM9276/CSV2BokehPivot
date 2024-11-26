@@ -3,12 +3,28 @@
 ### Intro
 As mentioned this is a version of Bokeh Pivot which works independently from ReEDS. Bokeh Pivot is a Python Bokeh app that creates pivot charts from data. A tutorial can be found here: https://youtu.be/8Xi59M4bB6I.
 
+Last updated documentation: 07/28/2023
 
 ## Installation
-1.Run Setup.bat
+1. Make sure you have Python (v3.0 and above) installed.
+   #### How to check
+     1. Open command prompt or equivalent software.
+     2. Type ```python --version``` and press enter.
+     3. The version of Python you have should be listed, otherwise, you don't have Python installed. Go to https://www.python.org/downloads/ to download and install the newest version of Python.
+2. Make sure you have Bokeh 2.4.3 installed
+   This is the version that has been tested and is functional.
+   #### How to check
+   1. Open command prompt or equivalent software.
+   2. Type ```bokeh --version``` and press enter.
+   3. The version of Bokeh you have should be listed, otherwise, you don't have Bokeh installed.
+   #### Installing bokeh
+   1. Open command prompt or equivalent software.
+   2. Type ```pip install bokeh==2.4.3```
+   More details and documentation at https://docs.bokeh.org/en/latest/docs/first_steps/installation.html
 
 ## Launching Bokeh Pivot
-1. Look for a file named ```launch.bat``` clicking it should open a new browser window with Bokeh Pivot.
+1. Download or clone this repository into your local machine.
+2. Inside the project root, look for a file named ```launch.bat``` clicking it should open a new browser window with Bokeh Pivot.
 
 
 Below are more instructions from the original Bokeh Pivot app
