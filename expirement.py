@@ -147,23 +147,30 @@ def execute_mode():
                 dimensions = config["dimensions"]
                 
                 # Add dimensions to new DataFrame
-                for key in dimensions:
+                for key, column_name in dimensions.items():
                     if key.startswith("Dim"):
-                        column_name = dimensions[key]
+                        # Handle dimension columns
                         if column_name in df.columns:
                             new_df[key] = df[column_name]
                         else:
-                            # Handle constant string
+                            # Handle constant values for dimensions
+                            new_df[key] = [column_name] * len(df)
+                    elif key in ["Year", "Month", "Day", "Hour"]:
+                        # Handle time-related fields
+                        if column_name in df.columns:
+                            new_df[key] = df[column_name]
+                        else:
+                            # Use default values if the column is not found
                             new_df[key] = [column_name] * len(df)
 
-                # Add value column to new DataFrame
+                # Add value column to new DataFrame using the real column name
                 if "Val" in dimensions:
                     value_col = dimensions["Val"]
                     if value_col in df.columns:
-                        new_df['Val'] = df[value_col]
+                        new_df[value_col] = df[value_col]
                     else:
-                        # Handle constant string
-                        new_df['Val'] = [value_col] * len(df)
+                        # Handle constant string for values
+                        new_df[value_col] = [value_col] * len(df)
 
                 # Determine the output folder structure
                 original_folder = os.path.dirname(full_path)
@@ -176,7 +183,7 @@ def execute_mode():
                 new_df.to_csv(new_csv, index=False)
                 print(f"New CSV file created: {new_csv}")
 
-        # This part handles cases where there is no configuration for the current file
+        # Handle cases with no configuration
         if not any(config["original_file"] == file_name for config in configurations.values()):
             print(f"Warning: Configuration for '{file_name}' not found in the configurations.")
 

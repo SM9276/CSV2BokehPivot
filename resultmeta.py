@@ -2,8 +2,15 @@ import os
 import collections
 import pandas as pd
 
-# Assuming the preprocessing functions are already defined:
-# sum_over_cols, sum_over_months, sum_over_days, sum_over_hours, scale_column
+# Placeholder for preprocessing functions
+def sum_over_cols(df, drop_cols, group_cols):
+    print(f"Summing over columns, dropping {drop_cols}, grouping by {group_cols}")
+    return df.drop(columns=drop_cols).groupby(group_cols).sum()
+
+def scale_column(df, scale_factor, column):
+    print(f"Scaling column {column} by factor {scale_factor}")
+    df[column] = df[column] * scale_factor
+    return df
 
 def generate_results_meta(runs_folder):
     # Walk through all subdirectories and files within 'runs' folder
@@ -26,53 +33,42 @@ def generate_results_meta(runs_folder):
                 # Displaying the first few rows to inspect the structure
                 print(f"First few rows of {file}:\n{df.head()}")
 
-                # Identify common columns across the files
-                common_columns = ['tech', 'year', 'month', 'day', 'hour', 'value']
+                # Identify possible value columns (excluding common metadata columns)
+                common_columns = ['Tech', 'Year', 'Month', 'Day', 'Hour']
+                value_columns = [col for col in df.columns if col not in common_columns]
 
-                # Checking for expected columns in the dataframe
-                if 'Capacity (GW)' in df.columns:
-                    value_column = 'Capacity (GW)'
-                elif 'Load (GW)' in df.columns:
-                    value_column = 'Load (GW)'
-                elif 'Generation (TWh)' in df.columns:
-                    value_column = 'Generation (TWh)'
-                elif 'Emissions (tonne)' in df.columns:
-                    value_column = 'Emissions (tonne)'
-                else:
-                    print(f"Skipping {file} since it does not have an expected value column")
-                    continue  # Skip files that don't have the expected columns
+                if not value_columns:
+                    print(f"Skipping {file} as it does not contain any value columns apart from {common_columns}.")
+                    continue  # Skip files without valid value columns
 
-                print(f"Identified value column: {value_column}")
+                # Generate metadata for each value column
+                for value_column in value_columns:
+                    print(f"Processing value column: {value_column}")
 
-                # Preprocess function to sum over columns (example for "sum_over_cols" function)
-                def sum_over_cols(df, drop_cols, group_cols):
-                    print(f"Summing over columns, dropping {drop_cols}, grouping by {group_cols}")
-                    return df.drop(columns=drop_cols).groupby(group_cols).sum()
+                    # Create the metadata for the current column
+                    key = f"{value_column} National"
+                    results_meta[key] = {
+                        'file': file,
+                        'folder': root,
+                        'columns': common_columns + [value_column],
+                        'preprocess': [
+                            {'func': sum_over_cols, 'args': {'drop_cols': ['rb'], 'group_cols': ['Tech', 'Year', 'Month', 'Day', 'Hour']}},
+                            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': value_column}},
+                        ],
+                        'index': ['Tech', 'Year', 'Month', 'Day', 'Hour'],
+                        'presets': collections.OrderedDict((
+                            ('Stacked Bars', {
+                                'x': 'Hour',
+                                'y': value_column,
+                                'series': 'Tech',
+                                'explode': 'Scenario',
+                                'chart_type': 'Bar',
+                                'bar_width': '1'
+                            }),
+                        )),
+                    }
 
-                # Create the metadata for the current file
-                key = f"{value_column} National"
-                results_meta[key] = {
-                    'file': file,
-                    'folder': root,
-                    'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', value_column],
-                    'preprocess': [
-                        {'func': sum_over_cols, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year', 'month', 'day', 'hour']}},
-                        {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': value_column}},
-                    ],
-                    'index': ['tech', 'year', 'month', 'day', 'hour'],
-                    'presets': collections.OrderedDict((
-                        ('Stacked Bars', {
-                            'x': 'hour',
-                            'y': value_column,
-                            'series': 'tech',
-                            'explode': 'scenario',
-                            'chart_type': 'Bar',
-                            'bar_width': '1'
-                        }),
-                    )),
-                }
-
-                print(f"Metadata for {file} generated: {results_meta[key]}")
+                    print(f"Metadata for value column '{value_column}' in file '{file}' generated: {results_meta[key]}")
 
     return results_meta
 
