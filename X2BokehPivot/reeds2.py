@@ -1344,308 +1344,411 @@ columns_meta = {
 #Note that multiple parameters may be read in for the same result (search below for 'sources')
 #Presets may also be defined.
 
-results_meta = collections.OrderedDict((
-    ('Capacity National (Yearly)',
-    	{'file': 'cap.csv',
-    	'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
-    	'preprocess': [
-       	{'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['tech', 'year']}},
-        {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
-    	],
-    	'index': ['tech', 'year'],
-    	'presets': collections.OrderedDict((
-        ('Stacked Bars', {'x': 'year', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1'}),
-    )),
-    }
-	),
+# results_meta = collections.OrderedDict((
+#     ('Capacity National (Yearly)',
+#     	{'file': 'cap.csv',
+#     	'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
+#     	'preprocess': [
+#        	{'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['tech', 'year']}},
+#         {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
+#     	],
+#     	'index': ['tech', 'year'],
+#     	'presets': collections.OrderedDict((
+#         ('Stacked Bars', {'x': 'year', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1'}),
+#     )),
+#     }
+# 	),
+#
+#     ('Capacity National (Monthly)',
+#         {'file': 'cap.csv',
+#         'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
+#         'preprocess': [
+#             {'func': sum_over_months, 'args': {'drop_cols': ['rb', 'day', 'hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
+#         ],
+#         'index': ['tech', 'year', 'month'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {'x': 'month', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last'}}),
+#         )),
+#     }
+#     ),
+#
+# ('Capacity National (Daily)',
+#     {'file': 'cap.csv',
+#     'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
+#     'preprocess': [
+#         {'func': sum_over_days, 'args': {'drop_cols': ['rb', 'hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day'}},
+#         {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
+#     ],
+#     'index': ['tech', 'year', 'month', 'day'],
+#     'presets': collections.OrderedDict((
+#         ('Stacked Bars', {'x': 'day', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last', 'month': 'last'}}),
+#     )),
+#     }
+# ),
+#
+# ('Capacity National (Hourly)',
+#     {'file': 'cap.csv',
+#     'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
+#     'preprocess': [
+#         {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col': 'hour'}},
+#         {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
+#     ],
+#     'index': ['tech', 'year', 'month', 'day', 'hour'],
+#     'presets': collections.OrderedDict((
+#         ('Stacked Bars', {'x': 'hour', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last', 'month': 'last', 'day': 'last'}}),
+#     )),
+#     }
+# ),
+#     ('Battery Load (Yearly)',
+#         {'file':'bat_load.csv',
+#         'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
+#         'preprocess': [
+#             {'func': sum_over_cols, 'args': {'drop_cols': ['rb','month','day','hour'], 'group_cols': ['tech', 'year']}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
+#         ],
+#         'index': ['tech', 'year'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'year', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1'}),
+#         )),
+#         }
+#     ),
+#
+#     ('Battery Load (Monthly)',
+#         {'file':'bat_load.csv',
+#         'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
+#         'preprocess': [
+#             {'func': sum_over_months, 'args': {'drop_cols': ['rb','day','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
+#         ],
+#         'index': ['tech', 'year','month'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'month', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last'}}),
+#         )),
+#         }
+#     ),
+#     ('Battery Load (Daily)',
+#         {'file':'bat_load.csv',
+#         'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
+#         'preprocess': [
+#             {'func': sum_over_days, 'args': {'drop_cols': ['rb','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month','day_col': 'day'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
+#         ],
+#         'index': ['tech', 'year','month','day'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'day', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last'}}),
+#         )),
+#         }
+#     ),
+#     ('Battery Load (Hourly)',
+#         {'file':'bat_load.csv',
+#         'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
+#         'preprocess': [
+#             {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col':'hour'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
+#         ],
+#         'index': ['tech', 'year','month','day','hour'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'hour', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last','day':'last'}}),
+#         )),
+#         }
+#     ),
+#
+#     ('Generation National (TWh)',
+#         {'file':'gen_ann.csv',
+#         'columns': ['tech', 'rb', 'year', 'month','day','hour','Generation (TWh)'],
+#         'preprocess': [
+#             {'func': sum_over_cols, 'args': {'drop_cols': ['rb','month','day','hour'], 'group_cols': ['tech', 'year']}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
+#         ],
+#         'index': ['tech', 'year'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Area',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
+#             ('Stacked Bars',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1'}),
+#             ('Stacked Bars Gen Frac',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1', 'adv_op':'Ratio', 'adv_col':'tech', 'adv_col_base':'Total'}),
+#             ('Explode By Tech',{'x':'year', 'y':'Generation (TWh)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
+#         )),
+#         }
+#     ),
+#
+#     ('Generation National Month',
+#         {'file':'gen_ann.csv',
+#         'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
+#         'preprocess': [
+#             {'func': sum_over_months, 'args': {'drop_cols': ['rb','day','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
+#         ],
+#         'index': ['tech','year','month'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'month', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter': {'year':'last'}}),
+#         )),
+#         }
+#      ),
+#     
+#     ('Generation National Day',
+#         {'file':'gen_ann.csv',
+#         'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
+#         'preprocess': [
+#             {'func': sum_over_days, 'args': {'drop_cols': ['rb','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month','day_col': 'day'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
+#         ],
+#         'index': ['tech','year','month','day'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'day', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last'}}),
+#         )),
+#         }
+#      ),
+#
+#     ('Generation National hour',
+#         {'file':'gen_ann.csv',
+#         'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
+#         'preprocess': [
+#             {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col':'hour'}},
+#             {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
+#         ],
+#         'index': ['tech','year','month','day','hour'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars',{'x':'hour', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1', 'filter':{'year':'last','month':'last','day':'last'}}),
+#         )),
+#         }
+#      ),
+#
+# ('CO2 Emissions by Generator (Yearly)',
+#     {
+#         'file': 'emit_r.csv',
+#         'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
+#         'preprocess': [
+#             {'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['e', 'year']}},
+#         ],
+#         'index': ['e', 'year'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {
+#                 'x': 'year',
+#                 'y': 'Emissions (tonne)',
+#                 'series': 'e',
+#                 'explode': 'scenario',
+#                 'chart_type': 'Bar',
+#                 'bar_width': '1'
+#             }),
+#         )),
+#     }
+# ),
+# ('CO2 Emissions National (Yearly)',
+#     {
+#         'file': 'emit_r.csv',
+#         'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
+#         'preprocess': [
+#             {'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['e', 'year']}},
+#         ],
+#         'index': ['e', 'year'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {
+#                 'x': 'year',
+#                 'y': 'Emissions (tonne)',
+#                 'series': 'e',
+#                 'explode': 'scenario',
+#                 'chart_type': 'Bar',
+#                 'bar_width': '1',
+#                 'filter': {'e': ['co2']}
+#             }),
+#         )),
+#     }
+# ),
+#
+# ('CO2 Emissions National (Monthly)',
+#     {
+#         'file': 'emit_r.csv',
+#         'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
+#         'preprocess': [
+#             {
+#                 'func': sum_over_months,
+#                 'args': {
+#                     'drop_cols': ['rb', 'day', 'hour'],
+#                     'group_cols': ['e', 'year'],
+#                     'month_col': 'month'
+#                 }
+#             },
+#         ],
+#         'index': ['e', 'year', 'month'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {
+#                 'x': 'month',
+#                 'y': 'Emissions (tonne)',
+#                 'series': 'e',
+#                 'explode': 'scenario',
+#                 'chart_type': 'Bar',
+#                 'bar_width': '1',
+#                 'filter': {'year': 'last', 'e': ['co2']}
+#             }),
+#         )),
+#     }
+# ),
+#
+# ('CO2 Emissions National (Daily)',
+#     {
+#         'file': 'emit_r.csv',
+#         'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
+#         'preprocess': [
+#             {
+#                 'func': sum_over_days,
+#                 'args': {
+#                     'drop_cols': ['rb', 'hour'],
+#                     'group_cols': ['e', 'year'],
+#                     'month_col': 'month',
+#                     'day_col': 'day'
+#                 }
+#             },
+#         ],
+#         'index': ['e', 'year', 'month', 'day'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {
+#                 'x': 'day',
+#                 'y': 'Emissions (tonne)',
+#                 'series': 'e',
+#                 'explode': 'scenario',
+#                 'chart_type': 'Bar',
+#                 'bar_width': '1',
+#                 'filter': {'year': 'last', 'month': 'last', 'e': ['co2']}
+#             }),
+#         )),
+#     }
+# ),
+#
+# ('CO2 Emissions National (Hourly)',
+#     {
+#         'file': 'emit_r.csv',
+#         'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
+#         'preprocess': [
+#             {
+#                 'func': sum_over_hours,
+#                 'args': {
+#                     'drop_cols': ['rb'],
+#                     'group_cols': ['e', 'year'],
+#                     'month_col': 'month',
+#                     'day_col': 'day',
+#                     'hour_col': 'hour'
+#                 }
+#             },
+#         ],
+#         'index': ['e', 'year', 'month', 'day', 'hour'],
+#         'presets': collections.OrderedDict((
+#             ('Stacked Bars', {
+#                 'x': 'hour',
+#                 'y': 'Emissions (tonne)',
+#                 'series': 'e',
+#                 'explode': 'scenario',
+#                 'chart_type': 'Bar',
+#                 'bar_width': '1',
+#                 'filter': {'year': 'last', 'month': 'last', 'day': 'last', 'e': ['co2']}
+#             }),
+#         )),
+#     }
+# ),
+#
+# ))
+#
+def generate_results_meta(runs_folder):
+    results_meta = collections.OrderedDict()
 
-    ('Capacity National (Monthly)',
-        {'file': 'cap.csv',
-        'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
-        'preprocess': [
-            {'func': sum_over_months, 'args': {'drop_cols': ['rb', 'day', 'hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
-        ],
-        'index': ['tech', 'year', 'month'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {'x': 'month', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last'}}),
-        )),
-    }
-    ),
-
-('Capacity National (Daily)',
-    {'file': 'cap.csv',
-    'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
-    'preprocess': [
-        {'func': sum_over_days, 'args': {'drop_cols': ['rb', 'hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day'}},
-        {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
-    ],
-    'index': ['tech', 'year', 'month', 'day'],
-    'presets': collections.OrderedDict((
-        ('Stacked Bars', {'x': 'day', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last', 'month': 'last'}}),
-    )),
-    }
-),
-
-('Capacity National (Hourly)',
-    {'file': 'cap.csv',
-    'columns': ['tech', 'rb', 'year', 'month', 'day', 'hour', 'Capacity (GW)'],
-    'preprocess': [
-        {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col': 'hour'}},
-        {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': 'Capacity (GW)'}},
-    ],
-    'index': ['tech', 'year', 'month', 'day', 'hour'],
-    'presets': collections.OrderedDict((
-        ('Stacked Bars', {'x': 'hour', 'y': 'Capacity (GW)', 'series': 'tech', 'explode': 'scenario', 'chart_type': 'Bar', 'bar_width': '1', 'filter': {'year': 'last', 'month': 'last', 'day': 'last'}}),
-    )),
-    }
-),
-    ('Battery Load (Yearly)',
-        {'file':'bat_load.csv',
-        'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
-        'preprocess': [
-            {'func': sum_over_cols, 'args': {'drop_cols': ['rb','month','day','hour'], 'group_cols': ['tech', 'year']}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
-        ],
-        'index': ['tech', 'year'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'year', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1'}),
-        )),
+    def create_granularity_meta(file, folder, columns, value_column):
+        base_meta = {
+            'file': file,
+            'columns': columns,
+            'preprocess': [],
+            'index': [],
+            'presets': collections.OrderedDict()
         }
-    ),
 
-    ('Battery Load (Monthly)',
-        {'file':'bat_load.csv',
-        'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
-        'preprocess': [
-            {'func': sum_over_months, 'args': {'drop_cols': ['rb','day','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
-        ],
-        'index': ['tech', 'year','month'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'month', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last'}}),
-        )),
-        }
-    ),
-    ('Battery Load (Daily)',
-        {'file':'bat_load.csv',
-        'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
-        'preprocess': [
-            {'func': sum_over_days, 'args': {'drop_cols': ['rb','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month','day_col': 'day'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
-        ],
-        'index': ['tech', 'year','month','day'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'day', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last'}}),
-        )),
-        }
-    ),
-    ('Battery Load (Hourly)',
-        {'file':'bat_load.csv',
-        'columns': ['tech', 'rb', 'year', 'month','day','hour','Load (GW)'],
-        'preprocess': [
-            {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col':'hour'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Load (GW)'}},
-        ],
-        'index': ['tech', 'year','month','day','hour'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'hour', 'y':'Load (GW)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last','day':'last'}}),
-        )),
-        }
-    ),
-
-    ('Generation National (TWh)',
-        {'file':'gen_ann.csv',
-        'columns': ['tech', 'rb', 'year', 'month','day','hour','Generation (TWh)'],
-        'preprocess': [
-            {'func': sum_over_cols, 'args': {'drop_cols': ['rb','month','day','hour'], 'group_cols': ['tech', 'year']}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
-        ],
-        'index': ['tech', 'year'],
-        'presets': collections.OrderedDict((
-            ('Stacked Area',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Area'}),
-            ('Stacked Bars',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1'}),
-            ('Stacked Bars Gen Frac',{'x':'year', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1', 'adv_op':'Ratio', 'adv_col':'tech', 'adv_col_base':'Total'}),
-            ('Explode By Tech',{'x':'year', 'y':'Generation (TWh)', 'series':'scenario', 'explode':'tech', 'chart_type':'Line'}),
-        )),
-        }
-    ),
-
-    ('Generation National Month',
-        {'file':'gen_ann.csv',
-        'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
-        'preprocess': [
-            {'func': sum_over_months, 'args': {'drop_cols': ['rb','day','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
-        ],
-        'index': ['tech','year','month'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'month', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter': {'year':'last'}}),
-        )),
-        }
-     ),
-    
-    ('Generation National Day',
-        {'file':'gen_ann.csv',
-        'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
-        'preprocess': [
-            {'func': sum_over_days, 'args': {'drop_cols': ['rb','hour'], 'group_cols': ['tech', 'year'], 'month_col': 'month','day_col': 'day'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
-        ],
-        'index': ['tech','year','month','day'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'day', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1','filter':{'year':'last','month':'last'}}),
-        )),
-        }
-     ),
-
-    ('Generation National hour',
-        {'file':'gen_ann.csv',
-        'columns': ['tech', 'rb', 'year','month','day','hour','Generation (TWh)'],
-        'preprocess': [
-            {'func': sum_over_hours, 'args': {'drop_cols': ['rb'], 'group_cols': ['tech', 'year'], 'month_col': 'month', 'day_col': 'day', 'hour_col':'hour'}},
-            {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column':'Generation (TWh)'}},
-        ],
-        'index': ['tech','year','month','day','hour'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars',{'x':'hour', 'y':'Generation (TWh)', 'series':'tech', 'explode':'scenario', 'chart_type':'Bar', 'bar_width':'1', 'filter':{'year':'last','month':'last','day':'last'}}),
-        )),
-        }
-     ),
-
-('CO2 Emissions by Generator (Yearly)',
-    {
-        'file': 'emit_r.csv',
-        'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
-        'preprocess': [
-            {'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['e', 'year']}},
-        ],
-        'index': ['e', 'year'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {
-                'x': 'year',
-                'y': 'Emissions (tonne)',
-                'series': 'e',
-                'explode': 'scenario',
-                'chart_type': 'Bar',
-                'bar_width': '1'
-            }),
-        )),
-    }
-),
-('CO2 Emissions National (Yearly)',
-    {
-        'file': 'emit_r.csv',
-        'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
-        'preprocess': [
-            {'func': sum_over_cols, 'args': {'drop_cols': ['rb', 'month', 'day', 'hour'], 'group_cols': ['e', 'year']}},
-        ],
-        'index': ['e', 'year'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {
-                'x': 'year',
-                'y': 'Emissions (tonne)',
-                'series': 'e',
-                'explode': 'scenario',
-                'chart_type': 'Bar',
-                'bar_width': '1',
-                'filter': {'e': ['co2']}
-            }),
-        )),
-    }
-),
-
-('CO2 Emissions National (Monthly)',
-    {
-        'file': 'emit_r.csv',
-        'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
-        'preprocess': [
+        granularities = [
             {
-                'func': sum_over_months,
-                'args': {
-                    'drop_cols': ['rb', 'day', 'hour'],
-                    'group_cols': ['e', 'year'],
-                    'month_col': 'month'
-                }
+                'name': 'Yearly',
+                'drop_cols': ['month', 'day', 'hour'],
+                'group_cols': ['tech', 'year'],
+                'index': ['tech', 'year'],
+                'x': 'year',
+                'filter': {}
             },
-        ],
-        'index': ['e', 'year', 'month'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {
+            {
+                'name': 'Monthly',
+                'drop_cols': ['day', 'hour'],
+                'group_cols': ['tech', 'year'],
+                'index': ['tech', 'year', 'month'],
                 'x': 'month',
-                'y': 'Emissions (tonne)',
-                'series': 'e',
-                'explode': 'scenario',
-                'chart_type': 'Bar',
-                'bar_width': '1',
-                'filter': {'year': 'last', 'e': ['co2']}
-            }),
-        )),
-    }
-),
-
-('CO2 Emissions National (Daily)',
-    {
-        'file': 'emit_r.csv',
-        'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
-        'preprocess': [
-            {
-                'func': sum_over_days,
-                'args': {
-                    'drop_cols': ['rb', 'hour'],
-                    'group_cols': ['e', 'year'],
-                    'month_col': 'month',
-                    'day_col': 'day'
-                }
+                'filter': {'year': 'last'}
             },
-        ],
-        'index': ['e', 'year', 'month', 'day'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {
+            {
+                'name': 'Daily',
+                'drop_cols': ['hour'],
+                'group_cols': ['tech', 'year'],
+                'index': ['tech', 'year', 'month', 'day'],
                 'x': 'day',
-                'y': 'Emissions (tonne)',
-                'series': 'e',
-                'explode': 'scenario',
-                'chart_type': 'Bar',
-                'bar_width': '1',
-                'filter': {'year': 'last', 'month': 'last', 'e': ['co2']}
-            }),
-        )),
-    }
-),
-
-('CO2 Emissions National (Hourly)',
-    {
-        'file': 'emit_r.csv',
-        'columns': ['e', 'rb', 'year', 'month', 'day', 'hour', 'Emissions (tonne)'],
-        'preprocess': [
-            {
-                'func': sum_over_hours,
-                'args': {
-                    'drop_cols': ['rb'],
-                    'group_cols': ['e', 'year'],
-                    'month_col': 'month',
-                    'day_col': 'day',
-                    'hour_col': 'hour'
-                }
+                'filter': {'year': 'last', 'month': 'last'}
             },
-        ],
-        'index': ['e', 'year', 'month', 'day', 'hour'],
-        'presets': collections.OrderedDict((
-            ('Stacked Bars', {
+            {
+                'name': 'Hourly',
+                'drop_cols': [],
+                'group_cols': ['tech', 'year'],
+                'index': ['tech', 'year', 'month', 'day', 'hour'],
                 'x': 'hour',
-                'y': 'Emissions (tonne)',
-                'series': 'e',
-                'explode': 'scenario',
-                'chart_type': 'Bar',
-                'bar_width': '1',
-                'filter': {'year': 'last', 'month': 'last', 'day': 'last', 'e': ['co2']}
-            }),
-        )),
-    }
-),
+                'filter': {'year': 'last', 'month': 'last', 'day': 'last'}
+            },
+        ]
 
-))
+        meta_entries = []
+        for granularity in granularities:
+            meta = base_meta.copy()
+            meta['preprocess'] = [
+                {'func': sum_over_cols, 'args': {'drop_cols': granularity['drop_cols'], 'group_cols': granularity['group_cols']}},
+                {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': value_column}}
+            ]
+            meta['index'] = granularity['index']
+            meta['presets'] = collections.OrderedDict((
+                ('Stacked Bars', {
+                    'x': granularity['x'],
+                    'y': value_column,
+                    'series': 'tech',
+                    'explode': 'scenario',
+                    'chart_type': 'Bar',
+                    'bar_width': '1',
+                    'filter': granularity['filter']
+                }),
+            ))
+            key = f"{value_column} National ({granularity['name']})"
+            meta['file'] = file
+            meta['columns'] = columns
+            meta_entries.append((key, meta))
+        return meta_entries
+
+    # Iterate over all files in the folder
+    for root, _, files in os.walk(runs_folder):
+        for file in files:
+            if file.endswith('.csv'):
+                file_path = os.path.join(root, file)
+                df = pd.read_csv(file_path)
+
+                common_columns = ['tech', 'year', 'month', 'day', 'hour']
+                value_columns = [col for col in df.columns if col not in common_columns]
+
+                if not value_columns:
+                    continue
+
+                for value_column in value_columns:
+                    columns = common_columns + [value_column]
+                    meta_entries = create_granularity_meta(file, root, columns, value_column)
+                    for key, meta in meta_entries:
+                        results_meta[key] = meta
+
+    return results_meta
+
+
+# Example usage
+runs_folder = '../runs'  # Directory containing the subfolders with CSV files
+results_meta = generate_results_meta(runs_folder)
+
+# Printing the generated results_meta
+print("\nFinal results_meta structure:")
+for key, value in results_meta.items():
+    print(f"Key: {key}, Value: {value}")
 
 #Sort alphabetically
 results_meta = collections.OrderedDict(sorted(results_meta.items()))
