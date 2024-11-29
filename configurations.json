@@ -1,13 +1,13 @@
 {
     "cap": {
-        "original_file": "Emissions.csv",
+        "original_file": "Generators.csv",
         "dimensions": {
             "Dim1": "collection_name",
-            "Year": "year",
-            "Month": "month",
-            "Day": 31,
-            "Hour": "hour",
-            "Val": "Production (ton)"
+            "year": "year",
+            "month": "month",
+            "day": 31,
+            "hour": "hour",
+            "val": "Generation (GWh)"
         }
     }
 }

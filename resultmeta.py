@@ -101,15 +101,23 @@ def generate_results_meta(runs_folder):
                     print(f"  Error loading {file_path}: {e}")
                     continue
 
-                common_columns = ['tech', 'year', 'month', 'day', 'hour']
-                value_columns = [col for col in df.columns if col not in common_columns]
+                # Remove duplicate columns that are unwanted (e.g., 'Dim1', 'Year', 'Month', 'Day', 'Hour')
+                relevant_columns = ['tech', 'year', 'month', 'day', 'hour']
+                all_columns = df.columns.tolist()
+
+                # Only keep the relevant columns and drop duplicates
+                value_columns = [
+                    col for col in all_columns
+                    if col not in relevant_columns and 'year' not in col.lower() and col != 'Dim1'
+                ]
                 print(f"  Identified value columns: {value_columns}")
 
                 if not value_columns:
                     print(f"  Skipping {file}: No value columns found.")
                     continue
 
-                columns = common_columns + value_columns
+                # Final columns list to be used for metadata creation
+                columns = relevant_columns + value_columns
                 meta_entries = create_granularity_meta(file, root, columns)
                 for key, meta in meta_entries:
                     results_meta[key] = meta

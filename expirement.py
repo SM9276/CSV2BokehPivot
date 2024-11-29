@@ -95,12 +95,12 @@ def mapping_mode():
         found = False
         for idx, col in enumerate(columns):
             if dim in col.lower():
-                dimensions[dim.capitalize()] = col
+                dimensions[dim] = col  # Use lowercase keys for dimensions
                 found = True
                 break
         if not found:
             print(f"'{dim}' column not found, defaulting to {default}.")
-            dimensions[dim.capitalize()] = default
+            dimensions[dim] = default
 
     # Ask for the value column
     print("Available columns for value:")
@@ -109,7 +109,7 @@ def mapping_mode():
     
     value_column = int(input("Select column for values by number: ")) - 1
     if 0 <= value_column < len(columns):
-        dimensions["Val"] = columns[value_column]
+        dimensions["val"] = columns[value_column]  # Use lowercase for 'val'
     else:
         print("Invalid selection. No value column selected.")
         return
@@ -155,7 +155,7 @@ def execute_mode():
                         else:
                             # Handle constant values for dimensions
                             new_df[key] = [column_name] * len(df)
-                    elif key in ["Year", "Month", "Day", "Hour"]:
+                    elif key in ["year", "month", "day", "hour"]:  # Lowercase keys for time dimensions
                         # Handle time-related fields
                         if column_name in df.columns:
                             new_df[key] = df[column_name]
@@ -164,8 +164,8 @@ def execute_mode():
                             new_df[key] = [column_name] * len(df)
 
                 # Add value column to new DataFrame using the real column name
-                if "Val" in dimensions:
-                    value_col = dimensions["Val"]
+                if "val" in dimensions:  # Lowercase 'val'
+                    value_col = dimensions["val"]
                     if value_col in df.columns:
                         new_df[value_col] = df[value_col]
                     else:

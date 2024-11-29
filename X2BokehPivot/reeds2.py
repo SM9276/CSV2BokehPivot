@@ -1647,10 +1647,14 @@ columns_meta = {
 #
 # ))
 #
+
+
 def generate_results_meta(runs_folder):
     results_meta = collections.OrderedDict()
 
-    def create_granularity_meta(file, folder, columns, value_column):
+    def create_granularity_meta(file, folder, columns):
+        print(f"Creating granularity metadata for file: {file}")
+        
         base_meta = {
             'file': file,
             'columns': columns,
@@ -1696,16 +1700,17 @@ def generate_results_meta(runs_folder):
 
         meta_entries = []
         for granularity in granularities:
+            print(f" - Generating metadata for granularity: {granularity['name']}")
             meta = base_meta.copy()
             meta['preprocess'] = [
                 {'func': sum_over_cols, 'args': {'drop_cols': granularity['drop_cols'], 'group_cols': granularity['group_cols']}},
-                {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': value_column}}
+                {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': columns[-1]}}  # Assumes last column is value column
             ]
             meta['index'] = granularity['index']
             meta['presets'] = collections.OrderedDict((
                 ('Stacked Bars', {
                     'x': granularity['x'],
-                    'y': value_column,
+                    'y': columns[-1],  # Assumes last column is value column
                     'series': 'tech',
                     'explode': 'scenario',
                     'chart_type': 'Bar',
@@ -1713,32 +1718,54 @@ def generate_results_meta(runs_folder):
                     'filter': granularity['filter']
                 }),
             ))
-            key = f"{value_column} National ({granularity['name']})"
+            key = f"{columns[-1]} ({granularity['name']})"
             meta['file'] = file
             meta['columns'] = columns
             meta_entries.append((key, meta))
+            print(f"   -> Key added: {key}")
         return meta_entries
 
     # Iterate over all files in the folder
+    print(f"Scanning folder: {runs_folder}")
     for root, _, files in os.walk(runs_folder):
         for file in files:
             if file.endswith('.csv'):
                 file_path = os.path.join(root, file)
-                df = pd.read_csv(file_path)
-
-                common_columns = ['tech', 'year', 'month', 'day', 'hour']
-                value_columns = [col for col in df.columns if col not in common_columns]
-
-                if not value_columns:
+                print(f"Processing file: {file_path}")
+                
+                try:
+                    df = pd.read_csv(file_path)
+                    print(f"  Loaded CSV successfully. Columns: {list(df.columns)}")
+                except Exception as e:
+                    print(f"  Error loading {file_path}: {e}")
                     continue
 
-                for value_column in value_columns:
-                    columns = common_columns + [value_column]
-                    meta_entries = create_granularity_meta(file, root, columns, value_column)
-                    for key, meta in meta_entries:
-                        results_meta[key] = meta
+                # Remove duplicate columns that are unwanted (e.g., 'Dim1', 'Year', 'Month', 'Day', 'Hour')
+                relevant_columns = ['tech', 'year', 'month', 'day', 'hour']
+                all_columns = df.columns.tolist()
 
+                # Only keep the relevant columns and drop duplicates
+                value_columns = [
+                    col for col in all_columns
+                    if col not in relevant_columns and 'year' not in col.lower() and col != 'Dim1'
+                ]
+                print(f"  Identified value columns: {value_columns}")
+
+                if not value_columns:
+                    print(f"  Skipping {file}: No value columns found.")
+                    continue
+
+                # Final columns list to be used for metadata creation
+                columns = relevant_columns + value_columns
+                meta_entries = create_granularity_meta(file, root, columns)
+                for key, meta in meta_entries:
+                    results_meta[key] = meta
+                    print(f"  -> Metadata entry added for key: {key}")
+
+    print(f"Finished generating metadata. Total keys: {len(results_meta)}")
     return results_meta
+
+
 
 
 # Example usage
