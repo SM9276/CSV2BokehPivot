@@ -17,7 +17,7 @@ def save_configurations(configurations):
         json.dump(configurations, file, indent=4)
 
 def list_all_csv_files(folder):
-    """ List all unique CSV files with their paths. """
+    """List all unique CSV files with their paths."""
     csv_files = {}
     for root, _, files in os.walk(folder):
         for file in files:
@@ -27,7 +27,7 @@ def list_all_csv_files(folder):
     return csv_files
 
 def list_all_csv_files_with_repeats(folder):
-    """ List all CSV files with their full paths, including duplicates. """
+    """List all CSV files with their full paths, including duplicates."""
     csv_files = []
     for root, _, files in os.walk(folder):
         for file in files:
@@ -64,7 +64,6 @@ def mapping_mode():
     dimensions = {}
     dimension_count = 1
     
-    # Ask for the first dimension
     while True:
         print(f"Enter column for dimension {dimension_count} (or type 'constant' to enter a constant string):")
         user_input = input()
@@ -86,30 +85,27 @@ def mapping_mode():
             except ValueError:
                 print("Invalid input. Please enter a number or 'constant'.")
     
-    # Default dimension handling for year, month, day, hour
     default_values = {"year": None, "month": 12, "day": 31, "hour": 23}
     
     print("Looking for 'year', 'month', 'day', and 'hour' columns. If not found, default values will be used.")
-    
     for dim, default in default_values.items():
         found = False
         for idx, col in enumerate(columns):
             if dim in col.lower():
-                dimensions[dim] = col  # Use lowercase keys for dimensions
+                dimensions[dim] = col
                 found = True
                 break
         if not found:
             print(f"'{dim}' column not found, defaulting to {default}.")
             dimensions[dim] = default
 
-    # Ask for the value column
     print("Available columns for value:")
     for idx, col in enumerate(columns):
         print(f"{idx + 1}. {col}")
     
     value_column = int(input("Select column for values by number: ")) - 1
     if 0 <= value_column < len(columns):
-        dimensions["val"] = columns[value_column]  # Use lowercase for 'val'
+        dimensions["val"] = columns[value_column]
     else:
         print("Invalid selection. No value column selected.")
         return
@@ -138,7 +134,6 @@ def execute_mode():
         file_name = os.path.basename(full_path)
         print(f"Processing file: {file_name}")
         
-        # Iterate over all configurations for the current file
         for new_file_name, config in configurations.items():
             if config["original_file"] == file_name:
                 print(f"Found configuration for {file_name}. Processing...")
@@ -146,44 +141,43 @@ def execute_mode():
                 new_df = pd.DataFrame()
                 dimensions = config["dimensions"]
                 
-                # Add dimensions to new DataFrame
                 for key, column_name in dimensions.items():
                     if key.startswith("Dim"):
-                        # Handle dimension columns
                         if column_name in df.columns:
                             new_df[key] = df[column_name]
                         else:
-                            # Handle constant values for dimensions
                             new_df[key] = [column_name] * len(df)
-                    elif key in ["year", "month", "day", "hour"]:  # Lowercase keys for time dimensions
-                        # Handle time-related fields
+                    elif key in ["year", "month", "day", "hour"]:
                         if column_name in df.columns:
                             new_df[key] = df[column_name]
                         else:
-                            # Use default values if the column is not found
                             new_df[key] = [column_name] * len(df)
 
-                # Add value column to new DataFrame using the real column name
-                if "val" in dimensions:  # Lowercase 'val'
+                if "val" in dimensions:
                     value_col = dimensions["val"]
                     if value_col in df.columns:
                         new_df[value_col] = df[value_col]
                     else:
-                        # Handle constant string for values
                         new_df[value_col] = [value_col] * len(df)
 
-                # Determine the output folder structure
                 original_folder = os.path.dirname(full_path)
                 relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
-                model_folder = os.path.basename(relative_folder)
-                output_folder = os.path.join(OUTPUT_FOLDER, model_folder, 'outputs')
+                output_folder = os.path.join(OUTPUT_FOLDER, relative_folder, 'outputs')
                 
+                # Create the output folder if it doesn't exist
+                os.makedirs(output_folder, exist_ok=True)
+                
+                # Create a dummy BP.csv file in the output folder
+                dummy_file_path = os.path.join(output_folder, 'BP.csv')
+                if not os.path.exists(dummy_file_path):
+                    with open(dummy_file_path, 'w') as dummy_file:
+                        dummy_file.write("This is a placeholder file.\n")
+                
+                # Save the new CSV file
                 new_csv = os.path.join(output_folder, f"{new_file_name}.csv")
-                os.makedirs(os.path.dirname(new_csv), exist_ok=True)
                 new_df.to_csv(new_csv, index=False)
                 print(f"New CSV file created: {new_csv}")
 
-        # Handle cases with no configuration
         if not any(config["original_file"] == file_name for config in configurations.values()):
             print(f"Warning: Configuration for '{file_name}' not found in the configurations.")
 

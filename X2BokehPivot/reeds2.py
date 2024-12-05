@@ -32,7 +32,7 @@ BOKEH_VS_DEBUG=True
   #  ptvsd.wait_for_attach()
 ###################################################
 
-rb_globs = {'output_subdir':'/outputs/', 'test_file':'cap.csv', 'report_subdir':'/reeds2'}
+rb_globs = {'output_subdir':'/outputs/', 'test_file':'BP.csv', 'report_subdir':'/reeds2'}
 this_dir_path = os.path.dirname(os.path.realpath(__file__))
 df_deflator = pd.read_csv(os.path.abspath(os.path.join(os.path.dirname(__file__), 'deflator.csv')), index_col=0)
 coststreams = ['eq_gasaccounting_regional','eq_gasaccounting_national','eq_bioused','eq_gasused','eq_objfn_inv','eq_objfn_op']
