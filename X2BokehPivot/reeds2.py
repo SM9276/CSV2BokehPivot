@@ -1648,19 +1648,26 @@ columns_meta = {
 # ))
 #
 
-
 def generate_results_meta(runs_folder):
     results_meta = collections.OrderedDict()
 
     def create_granularity_meta(file, folder, columns):
         print(f"Creating granularity metadata for file: {file}")
-        
+
         base_meta = {
             'file': file,
             'columns': columns,
             'preprocess': [],
             'index': [],
             'presets': collections.OrderedDict()
+        }
+
+        # Map granularity levels to their respective summation functions
+        granularity_functions = {
+            'Yearly': sum_over_cols,
+            'Monthly': sum_over_months,
+            'Daily': sum_over_days,
+            'Hourly': sum_over_hours,
         }
 
         granularities = [
@@ -1675,7 +1682,7 @@ def generate_results_meta(runs_folder):
             {
                 'name': 'Monthly',
                 'drop_cols': ['day', 'hour'],
-                'group_cols': ['tech', 'year'],
+                'group_cols': ['tech', 'year', 'month'],
                 'index': ['tech', 'year', 'month'],
                 'x': 'month',
                 'filter': {'year': 'last'}
@@ -1683,7 +1690,7 @@ def generate_results_meta(runs_folder):
             {
                 'name': 'Daily',
                 'drop_cols': ['hour'],
-                'group_cols': ['tech', 'year'],
+                'group_cols': ['tech', 'year', 'month', 'day'],
                 'index': ['tech', 'year', 'month', 'day'],
                 'x': 'day',
                 'filter': {'year': 'last', 'month': 'last'}
@@ -1691,7 +1698,7 @@ def generate_results_meta(runs_folder):
             {
                 'name': 'Hourly',
                 'drop_cols': [],
-                'group_cols': ['tech', 'year'],
+                'group_cols': ['tech', 'year', 'month', 'day', 'hour'],
                 'index': ['tech', 'year', 'month', 'day', 'hour'],
                 'x': 'hour',
                 'filter': {'year': 'last', 'month': 'last', 'day': 'last'}
@@ -1702,8 +1709,12 @@ def generate_results_meta(runs_folder):
         for granularity in granularities:
             print(f" - Generating metadata for granularity: {granularity['name']}")
             meta = base_meta.copy()
+
+            # Dynamically select the summation function based on the granularity
+            sum_function = granularity_functions[granularity['name']]
+            
             meta['preprocess'] = [
-                {'func': sum_over_cols, 'args': {'drop_cols': granularity['drop_cols'], 'group_cols': granularity['group_cols']}},
+                {'func': sum_function, 'args': {'drop_cols': granularity['drop_cols'], 'group_cols': granularity['group_cols']}},
                 {'func': scale_column, 'args': {'scale_factor': 1e-6, 'column': columns[-1]}}  # Assumes last column is value column
             ]
             meta['index'] = granularity['index']
@@ -1732,7 +1743,7 @@ def generate_results_meta(runs_folder):
             if file.endswith('.csv'):
                 file_path = os.path.join(root, file)
                 print(f"Processing file: {file_path}")
-                
+
                 try:
                     df = pd.read_csv(file_path)
                     print(f"  Loaded CSV successfully. Columns: {list(df.columns)}")
@@ -1764,8 +1775,6 @@ def generate_results_meta(runs_folder):
 
     print(f"Finished generating metadata. Total keys: {len(results_meta)}")
     return results_meta
-
-
 
 
 # Example usage
