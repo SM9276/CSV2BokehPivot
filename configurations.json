@@ -20,5 +20,13 @@
             "hour": "hour",
             "val": "Load (GWh)"
         }
+    },
+    "yes": {
+        "original_file": "collection_1_property_214.csv",
+        "dimensions": {
+            "Dim1": "category_name",
+            "Dim2": "value",
+            "val": "year"
+        }
     }
 }
