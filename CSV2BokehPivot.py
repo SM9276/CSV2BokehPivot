@@ -1,33 +1,30 @@
 import os
 import pandas as pd
 import json
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog, scrolledtext
 
 CONFIG_FILE = 'configurations.json'
 INPUT_FOLDER = 'inputs'
 OUTPUT_FOLDER = 'runs'
 
+
 def load_configurations():
+    """Load saved configurations."""
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as file:
             return json.load(file)
     return {}
 
+
 def save_configurations(configurations):
+    """Save configurations to a JSON file."""
     with open(CONFIG_FILE, 'w') as file:
         json.dump(configurations, file, indent=4)
 
-def list_all_csv_files(folder):
-    """List all unique CSV files with their paths."""
-    csv_files = {}
-    for root, _, files in os.walk(folder):
-        for file in files:
-            if file.endswith('.csv'):
-                relative_path = os.path.relpath(os.path.join(root, file), folder)
-                csv_files[file] = os.path.join(root, file)
-    return csv_files
 
 def list_all_csv_files_with_repeats(folder):
-    """List all CSV files with their full paths, including duplicates."""
+    """List all CSV files in the folder, including those with duplicate names."""
     csv_files = []
     for root, _, files in os.walk(folder):
         for file in files:
@@ -35,152 +32,234 @@ def list_all_csv_files_with_repeats(folder):
                 csv_files.append(os.path.join(root, file))
     return csv_files
 
-def map_columns(old_csv):
-    df = pd.read_csv(old_csv)
+
+def map_columns(file_path):
+    """Get column names from a CSV file."""
+    df = pd.read_csv(file_path)
     return df.columns.tolist()
 
-def mapping_mode():
-    configurations = load_configurations()
-    csv_files = list_all_csv_files(INPUT_FOLDER)
-    
-    if not csv_files:
-        print("No CSV files found in the 'inputs' folder.")
-        return
 
-    print("Available CSV files (names only):")
-    unique_names = set(os.path.basename(path) for path in csv_files.values())
-    for idx, file_name in enumerate(unique_names):
-        print(f"{idx + 1}. {file_name}")
-    
-    file_idx = int(input("Select a CSV file by number: ")) - 1
-    selected_file_name = list(unique_names)[file_idx]
-    old_csv_path = csv_files[selected_file_name]
-    columns = map_columns(old_csv_path)
-    
-    print("Available columns to map:")
-    for idx, col in enumerate(columns):
-        print(f"{idx + 1}. {col}")
-    
-    dimensions = {}
-    dimension_count = 1
-    
-    while True:
-        print(f"Enter column for dimension {dimension_count} (or type 'constant' to enter a constant string):")
-        user_input = input()
-        
-        if user_input.lower() == 'constant':
-            constant_value = input(f"Enter constant value for dimension {dimension_count}: ")
-            dimensions[f"Dim{dimension_count}"] = constant_value
-            dimension_count += 1
-            break
-        else:
-            try:
-                dim_col = int(user_input) - 1
-                if 0 <= dim_col < len(columns):
-                    dimensions[f"Dim{dimension_count}"] = columns[dim_col]
-                    dimension_count += 1
+class CSVProcessorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("CSV Processor")
+        self.configurations = load_configurations()
+
+        # Main buttons
+        self.btn_mapping = tk.Button(root, text="Mapping Mode", command=self.mapping_mode)
+        self.btn_mapping.pack(pady=10)
+
+        self.btn_execute = tk.Button(root, text="Execute Mode", command=self.execute_mode)
+        self.btn_execute.pack(pady=10)
+
+        self.btn_view_mappings = tk.Button(root, text="View Mappings", command=self.view_mappings)
+        self.btn_view_mappings.pack(pady=10)
+
+        self.btn_exit = tk.Button(root, text="Exit", command=root.quit)
+        self.btn_exit.pack(pady=10)
+
+    def mapping_mode(self):
+        csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
+        if not csv_files:
+            messagebox.showerror("Error", "No CSV files found in the 'inputs' folder.")
+            return
+
+        # File selection window
+        file_selection_window = tk.Toplevel(self.root)
+        file_selection_window.title("Select CSV File")
+
+        tk.Label(file_selection_window, text="Select a CSV File:").pack(pady=5)
+        listbox = tk.Listbox(file_selection_window, selectmode=tk.SINGLE, width=50, height=15)
+        listbox.pack(pady=10)
+
+        # Populate Listbox
+        file_names = list(csv_files)
+        for file in file_names:
+            listbox.insert(tk.END, os.path.basename(file))
+
+        def select_file():
+            selected_index = listbox.curselection()
+            if not selected_index:
+                messagebox.showerror("Error", "No file selected.")
+                return
+
+            selected_file = file_names[selected_index[0]]
+            file_selection_window.destroy()
+            self.configure_mapping(selected_file)
+
+        tk.Button(file_selection_window, text="Select", command=select_file).pack(pady=5)
+
+    def configure_mapping(self, file_path):
+        columns = map_columns(file_path)
+        dimensions = {}
+        dimension_count = 1
+
+        # Auto-map time columns
+        default_values = {"year": None, "month": 12, "day": 31, "hour": 23}
+        for time_unit, default in default_values.items():
+            found = False
+            for col in columns:
+                if time_unit in col.lower():
+                    dimensions[time_unit] = col
+                    found = True
                     break
+            if not found:
+                dimensions[time_unit] = default
+
+        mapping_window = tk.Toplevel(self.root)
+        mapping_window.title("Map Dimensions")
+        tk.Label(mapping_window, text="Map Dimensions").pack(pady=5)
+
+        column_listbox = tk.Listbox(mapping_window, selectmode=tk.SINGLE, width=50, height=15)
+        column_listbox.pack(pady=10)
+
+        for col in columns:
+            column_listbox.insert(tk.END, col)
+
+        def add_dimension():
+            nonlocal dimension_count
+            selected_index = column_listbox.curselection()
+            if selected_index:
+                dimensions[f"Dim{dimension_count}"] = columns[selected_index[0]]
+            else:
+                constant_value = simpledialog.askstring("Constant Value", f"Enter constant value for dimension {dimension_count}:")
+                if constant_value:
+                    dimensions[f"Dim{dimension_count}"] = constant_value
                 else:
-                    print("Invalid selection. Please try again.")
-            except ValueError:
-                print("Invalid input. Please enter a number or 'constant'.")
-    
-    default_values = {"year": None, "month": 12, "day": 31, "hour": 23}
-    
-    print("Looking for 'year', 'month', 'day', and 'hour' columns. If not found, default values will be used.")
-    for dim, default in default_values.items():
-        found = False
-        for idx, col in enumerate(columns):
-            if dim in col.lower():
-                dimensions[dim] = col
-                found = True
-                break
-        if not found:
-            print(f"'{dim}' column not found, defaulting to {default}.")
-            dimensions[dim] = default
+                    return
 
-    print("Available columns for value:")
-    for idx, col in enumerate(columns):
-        print(f"{idx + 1}. {col}")
-    
-    value_column = int(input("Select column for values by number: ")) - 1
-    if 0 <= value_column < len(columns):
-        dimensions["val"] = columns[value_column]
-    else:
-        print("Invalid selection. No value column selected.")
-        return
-    
-    new_file_name = input("Enter the new file name (without extension): ")
-    if not new_file_name:
-        print("Invalid file name. Configuration not saved.")
-        return
-    
-    configurations[new_file_name] = {
-        "original_file": selected_file_name,
-        "dimensions": dimensions
-    }
-    
-    save_configurations(configurations)
-    print("Configuration saved.")
+            dimension_count += 1
+            messagebox.showinfo("Info", f"Dimension {dimension_count - 1} added successfully!")
 
-def execute_mode():
-    configurations = load_configurations()
-    all_csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
-    
-    print(f"Loaded configurations: {configurations}")
-    print(f"Found CSV files: {all_csv_files}")
-    
-    for full_path in all_csv_files:
-        file_name = os.path.basename(full_path)
-        print(f"Processing file: {file_name}")
-        
-        for new_file_name, config in configurations.items():
-            if config["original_file"] == file_name:
-                print(f"Found configuration for {file_name}. Processing...")
-                df = pd.read_csv(full_path)
-                new_df = pd.DataFrame()
-                dimensions = config["dimensions"]
-                
-                for key, column_name in dimensions.items():
-                    if key.startswith("Dim"):
-                        if column_name in df.columns:
-                            new_df[key] = df[column_name]
+        def map_value_column():
+            selected_index = column_listbox.curselection()
+            if selected_index:
+                dimensions["val"] = columns[selected_index[0]]
+                messagebox.showinfo("Info", f"Value column set to: {columns[selected_index[0]]}")
+            else:
+                messagebox.showerror("Error", "No value column selected.")
+
+        def finish_mapping():
+            new_file_name = simpledialog.askstring("File Name", "Enter the new file name (without extension):")
+            if not new_file_name:
+                messagebox.showerror("Error", "Invalid file name.")
+                return
+
+            self.configurations[new_file_name] = {
+                "original_file": os.path.basename(file_path),
+                "dimensions": dimensions
+            }
+            save_configurations(self.configurations)
+            mapping_window.destroy()
+            messagebox.showinfo("Success", "Configuration saved successfully!")
+
+        tk.Button(mapping_window, text="Add Dimension", command=add_dimension).pack(pady=5)
+        tk.Button(mapping_window, text="Set Value Column", command=map_value_column).pack(pady=5)
+        tk.Button(mapping_window, text="Finish Mapping", command=finish_mapping).pack(pady=5)
+
+    def view_mappings(self):
+        mappings_window = tk.Toplevel(self.root)
+        mappings_window.title("View Mappings")
+
+        tk.Label(mappings_window, text="Existing Mappings:").pack(pady=5)
+        listbox = tk.Listbox(mappings_window, width=50, height=15)
+        listbox.pack(pady=10)
+
+        mapping_keys = list(self.configurations.keys())
+        for key in mapping_keys:
+            listbox.insert(tk.END, key)
+
+        def delete_mapping():
+            selected_index = listbox.curselection()
+            if selected_index:
+                selected_key = mapping_keys[selected_index[0]]
+                del self.configurations[selected_key]
+                save_configurations(self.configurations)
+                listbox.delete(selected_index[0])
+                messagebox.showinfo("Success", f"Mapping '{selected_key}' deleted successfully!")
+            else:
+                messagebox.showerror("Error", "No mapping selected.")
+
+        def view_mapping_details():
+            selected_index = listbox.curselection()
+            if selected_index:
+                selected_key = mapping_keys[selected_index[0]]
+                config = self.configurations[selected_key]
+                details = f"File: {config['original_file']}\nDimensions:\n"
+                for key, val in config['dimensions'].items():
+                    details += f"{key}: {val}\n"
+                messagebox.showinfo("Mapping Details", details)
+            else:
+                messagebox.showerror("Error", "No mapping selected.")
+
+        tk.Button(mappings_window, text="Delete Mapping", command=delete_mapping).pack(pady=5)
+        tk.Button(mappings_window, text="View Mapping Details", command=view_mapping_details).pack(pady=5)
+
+    def execute_mode(self):
+        configurations = load_configurations()
+        all_csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
+
+        # Create a window to display the log
+        log_window = tk.Toplevel(self.root)
+        log_window.title("Execution Log")
+
+        log_text = scrolledtext.ScrolledText(log_window, width=80, height=20)
+        log_text.pack(pady=10)
+
+        log_text.insert(tk.END, "Starting file processing...\n")
+        log_text.yview(tk.END)
+
+        # Iterate through all files in the input folder
+        for full_path in all_csv_files:
+            file_name = os.path.basename(full_path)
+            log_text.insert(tk.END, f"Processing file: {file_name}\n")
+            log_text.yview(tk.END)
+
+            for new_file_name, config in configurations.items():
+                if config["original_file"] == file_name:
+                    log_text.insert(tk.END, f"Found configuration for {file_name}. Processing...\n")
+                    log_text.yview(tk.END)
+                    df = pd.read_csv(full_path)
+                    new_df = pd.DataFrame()
+                    dimensions = config["dimensions"]
+
+                    for key, column_name in dimensions.items():
+                        if key.startswith("Dim"):
+                            if column_name in df.columns:
+                                new_df[key] = df[column_name]
+                            else:
+                                new_df[key] = [column_name] * len(df)
+                        elif key in ["year", "month", "day", "hour"]:
+                            if column_name in df.columns:
+                                new_df[key] = df[column_name]
+                            else:
+                                new_df[key] = [column_name] * len(df)
+
+                    if "val" in dimensions:
+                        value_col = dimensions["val"]
+                        if value_col in df.columns:
+                            new_df[value_col] = df[value_col]
                         else:
-                            new_df[key] = [column_name] * len(df)
-                    elif key in ["year", "month", "day", "hour"]:
-                        if column_name in df.columns:
-                            new_df[key] = df[column_name]
-                        else:
-                            new_df[key] = [column_name] * len(df)
+                            new_df[value_col] = [value_col] * len(df)
 
-                if "val" in dimensions:
-                    value_col = dimensions["val"]
-                    if value_col in df.columns:
-                        new_df[value_col] = df[value_col]
-                    else:
-                        new_df[value_col] = [value_col] * len(df)
+                    original_folder = os.path.dirname(full_path)
+                    relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
+                    output_folder = os.path.join(OUTPUT_FOLDER, relative_folder, 'outputs')
 
-                original_folder = os.path.dirname(full_path)
-                relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
-                output_folder = os.path.join(OUTPUT_FOLDER, relative_folder, 'outputs')
-                
-                new_csv = os.path.join(output_folder, f"{new_file_name}.csv")
-                os.makedirs(os.path.dirname(new_csv), exist_ok=True)
-                new_df.to_csv(new_csv, index=False)
-                print(f"New CSV file created: {new_csv}")
+                    # Create the output folder if it doesn't exist
+                    os.makedirs(output_folder, exist_ok=True)
 
-        if not any(config["original_file"] == file_name for config in configurations.values()):
-            print(f"Warning: Configuration for '{file_name}' not found in the configurations.")
+                    # Save the new dataframe as a CSV file
+                    output_file_path = os.path.join(output_folder, f"{new_file_name}.csv")
+                    new_df.to_csv(output_file_path, index=False)
+                    log_text.insert(tk.END, f"File saved to {output_file_path}\n")
+                    log_text.yview(tk.END)
 
-def main():
-    mode = input("Enter mode (Mapping/Execute): ").strip().lower()
-    if mode == 'mapping':
-        mapping_mode()
-    elif mode == 'execute':
-        execute_mode()
-    else:
-        print("Invalid mode.")
+        messagebox.showinfo("Success", "Execution complete!")
 
-if __name__ == "__main__":
-    main()
+
+# Set up Tkinter
+root = tk.Tk()
+app = CSVProcessorApp(root)
+root.mainloop()
 
