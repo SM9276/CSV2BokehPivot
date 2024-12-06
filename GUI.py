@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, scrolledtext
 
 CONFIG_FILE = 'configurations.json'
 INPUT_FOLDER = 'inputs'
@@ -10,6 +10,7 @@ OUTPUT_FOLDER = 'runs'
 
 
 def load_configurations():
+    """Load saved configurations."""
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as file:
             return json.load(file)
@@ -17,23 +18,13 @@ def load_configurations():
 
 
 def save_configurations(configurations):
+    """Save configurations to a JSON file."""
     with open(CONFIG_FILE, 'w') as file:
         json.dump(configurations, file, indent=4)
 
 
-def list_all_csv_files(folder):
-    """List all unique CSV files with their paths."""
-    csv_files = {}
-    for root, _, files in os.walk(folder):
-        for file in files:
-            if file.endswith('.csv'):
-                relative_path = os.path.relpath(os.path.join(root, file), folder)
-                csv_files[file] = os.path.join(root, file)
-    return csv_files
-
-
 def list_all_csv_files_with_repeats(folder):
-    """List all CSV files with their full paths, including duplicates."""
+    """List all CSV files in the folder, including those with duplicate names."""
     csv_files = []
     for root, _, files in os.walk(folder):
         for file in files:
@@ -43,6 +34,7 @@ def list_all_csv_files_with_repeats(folder):
 
 
 def map_columns(file_path):
+    """Get column names from a CSV file."""
     df = pd.read_csv(file_path)
     return df.columns.tolist()
 
@@ -60,11 +52,14 @@ class CSVProcessorApp:
         self.btn_execute = tk.Button(root, text="Execute Mode", command=self.execute_mode)
         self.btn_execute.pack(pady=10)
 
+        self.btn_view_mappings = tk.Button(root, text="View Mappings", command=self.view_mappings)
+        self.btn_view_mappings.pack(pady=10)
+
         self.btn_exit = tk.Button(root, text="Exit", command=root.quit)
         self.btn_exit.pack(pady=10)
 
     def mapping_mode(self):
-        csv_files = list_all_csv_files(INPUT_FOLDER)
+        csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
         if not csv_files:
             messagebox.showerror("Error", "No CSV files found in the 'inputs' folder.")
             return
@@ -78,10 +73,9 @@ class CSVProcessorApp:
         listbox.pack(pady=10)
 
         # Populate Listbox
-        file_names = list(csv_files.keys())
-        file_paths = list(csv_files.values())
-        for file_name in file_names:
-            listbox.insert(tk.END, file_name)
+        file_names = list(csv_files)
+        for file in file_names:
+            listbox.insert(tk.END, os.path.basename(file))
 
         def select_file():
             selected_index = listbox.curselection()
@@ -89,16 +83,28 @@ class CSVProcessorApp:
                 messagebox.showerror("Error", "No file selected.")
                 return
 
-            selected_file = file_paths[selected_index[0]]
+            selected_file = file_names[selected_index[0]]
             file_selection_window.destroy()
-            self.configure_mapping(selected_file, file_names[selected_index[0]])
+            self.configure_mapping(selected_file)
 
         tk.Button(file_selection_window, text="Select", command=select_file).pack(pady=5)
 
-    def configure_mapping(self, file_path, file_name):
+    def configure_mapping(self, file_path):
         columns = map_columns(file_path)
         dimensions = {}
         dimension_count = 1
+
+        # Auto-map time columns
+        default_values = {"year": None, "month": 12, "day": 31, "hour": 23}
+        for time_unit, default in default_values.items():
+            found = False
+            for col in columns:
+                if time_unit in col.lower():
+                    dimensions[time_unit] = col
+                    found = True
+                    break
+            if not found:
+                dimensions[time_unit] = default
 
         mapping_window = tk.Toplevel(self.root)
         mapping_window.title("Map Dimensions")
@@ -125,21 +131,22 @@ class CSVProcessorApp:
             dimension_count += 1
             messagebox.showinfo("Info", f"Dimension {dimension_count - 1} added successfully!")
 
-        def finish_mapping():
-            value_col_index = simpledialog.askinteger("Value Column", "Enter the column index for values:")
-            if value_col_index and 0 <= value_col_index - 1 < len(columns):
-                dimensions["val"] = columns[value_col_index - 1]
+        def map_value_column():
+            selected_index = column_listbox.curselection()
+            if selected_index:
+                dimensions["val"] = columns[selected_index[0]]
+                messagebox.showinfo("Info", f"Value column set to: {columns[selected_index[0]]}")
             else:
-                messagebox.showerror("Error", "Invalid value column.")
-                return
+                messagebox.showerror("Error", "No value column selected.")
 
+        def finish_mapping():
             new_file_name = simpledialog.askstring("File Name", "Enter the new file name (without extension):")
             if not new_file_name:
                 messagebox.showerror("Error", "Invalid file name.")
                 return
 
             self.configurations[new_file_name] = {
-                "original_file": file_name,
+                "original_file": os.path.basename(file_path),
                 "dimensions": dimensions
             }
             save_configurations(self.configurations)
@@ -147,49 +154,112 @@ class CSVProcessorApp:
             messagebox.showinfo("Success", "Configuration saved successfully!")
 
         tk.Button(mapping_window, text="Add Dimension", command=add_dimension).pack(pady=5)
+        tk.Button(mapping_window, text="Set Value Column", command=map_value_column).pack(pady=5)
         tk.Button(mapping_window, text="Finish Mapping", command=finish_mapping).pack(pady=5)
 
-    def execute_mode(self):
-        csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
-        if not csv_files:
-            messagebox.showerror("Error", "No CSV files found in the 'inputs' folder.")
-            return
+    def view_mappings(self):
+        mappings_window = tk.Toplevel(self.root)
+        mappings_window.title("View Mappings")
 
-        for file_path in csv_files:
-            file_name = os.path.basename(file_path)
-            for new_file_name, config in self.configurations.items():
+        tk.Label(mappings_window, text="Existing Mappings:").pack(pady=5)
+        listbox = tk.Listbox(mappings_window, width=50, height=15)
+        listbox.pack(pady=10)
+
+        mapping_keys = list(self.configurations.keys())
+        for key in mapping_keys:
+            listbox.insert(tk.END, key)
+
+        def delete_mapping():
+            selected_index = listbox.curselection()
+            if selected_index:
+                selected_key = mapping_keys[selected_index[0]]
+                del self.configurations[selected_key]
+                save_configurations(self.configurations)
+                listbox.delete(selected_index[0])
+                messagebox.showinfo("Success", f"Mapping '{selected_key}' deleted successfully!")
+            else:
+                messagebox.showerror("Error", "No mapping selected.")
+
+        def view_mapping_details():
+            selected_index = listbox.curselection()
+            if selected_index:
+                selected_key = mapping_keys[selected_index[0]]
+                config = self.configurations[selected_key]
+                details = f"File: {config['original_file']}\nDimensions:\n"
+                for key, val in config['dimensions'].items():
+                    details += f"{key}: {val}\n"
+                messagebox.showinfo("Mapping Details", details)
+            else:
+                messagebox.showerror("Error", "No mapping selected.")
+
+        tk.Button(mappings_window, text="Delete Mapping", command=delete_mapping).pack(pady=5)
+        tk.Button(mappings_window, text="View Mapping Details", command=view_mapping_details).pack(pady=5)
+
+    def execute_mode(self):
+        configurations = load_configurations()
+        all_csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
+
+        # Create a window to display the log
+        log_window = tk.Toplevel(self.root)
+        log_window.title("Execution Log")
+
+        log_text = scrolledtext.ScrolledText(log_window, width=80, height=20)
+        log_text.pack(pady=10)
+
+        log_text.insert(tk.END, "Starting file processing...\n")
+        log_text.yview(tk.END)
+
+        # Iterate through all files in the input folder
+        for full_path in all_csv_files:
+            file_name = os.path.basename(full_path)
+            log_text.insert(tk.END, f"Processing file: {file_name}\n")
+            log_text.yview(tk.END)
+
+            for new_file_name, config in configurations.items():
                 if config["original_file"] == file_name:
-                    df = pd.read_csv(file_path)
+                    log_text.insert(tk.END, f"Found configuration for {file_name}. Processing...\n")
+                    log_text.yview(tk.END)
+                    df = pd.read_csv(full_path)
                     new_df = pd.DataFrame()
                     dimensions = config["dimensions"]
 
                     for key, column_name in dimensions.items():
                         if key.startswith("Dim"):
-                            new_df[key] = df[column_name] if column_name in df.columns else [column_name] * len(df)
+                            if column_name in df.columns:
+                                new_df[key] = df[column_name]
+                            else:
+                                new_df[key] = [column_name] * len(df)
+                        elif key in ["year", "month", "day", "hour"]:
+                            if column_name in df.columns:
+                                new_df[key] = df[column_name]
+                            else:
+                                new_df[key] = [column_name] * len(df)
 
-                    if "val" in dimensions and dimensions["val"] in df.columns:
-                        new_df["val"] = df[dimensions["val"]]
+                    if "val" in dimensions:
+                        value_col = dimensions["val"]
+                        if value_col in df.columns:
+                            new_df[value_col] = df[value_col]
+                        else:
+                            new_df[value_col] = [value_col] * len(df)
 
-                    output_folder = os.path.join(OUTPUT_FOLDER, file_name)
+                    original_folder = os.path.dirname(full_path)
+                    relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
+                    output_folder = os.path.join(OUTPUT_FOLDER, relative_folder, 'outputs')
+
+                    # Create the output folder if it doesn't exist
                     os.makedirs(output_folder, exist_ok=True)
 
-                    dummy_file = os.path.join(output_folder, "BP.csv")
-                    with open(dummy_file, "w") as f:
-                        f.write("This is a placeholder file.\n")
+                    # Save the new dataframe as a CSV file
+                    output_file_path = os.path.join(output_folder, f"{new_file_name}.csv")
+                    new_df.to_csv(output_file_path, index=False)
+                    log_text.insert(tk.END, f"File saved to {output_file_path}\n")
+                    log_text.yview(tk.END)
 
-                    output_file = os.path.join(output_folder, f"{new_file_name}.csv")
-                    new_df.to_csv(output_file, index=False)
-
-        messagebox.showinfo("Success", "All files processed successfully!")
+        messagebox.showinfo("Success", "Execution complete!")
 
 
-if __name__ == "__main__":
-    if not os.path.exists(INPUT_FOLDER):
-        os.makedirs(INPUT_FOLDER)
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
-
-    root = tk.Tk()
-    app = CSVProcessorApp(root)
-    root.mainloop()
+# Set up Tkinter
+root = tk.Tk()
+app = CSVProcessorApp(root)
+root.mainloop()
 

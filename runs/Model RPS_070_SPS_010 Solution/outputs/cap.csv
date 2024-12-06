@@ -1,4 +1,4 @@
-Dim1,year,month,day,hour,val
+Dim1,year,month,day,hour,Generation (GWh)
 Generator,2023,12,31,12,57.25467500001
 Generator,2024,12,31,12,54.54885000008
 Generator,2025,12,31,12,54.661339302
