@@ -9,16 +9,5 @@
             "hour": "hour",
             "val": "Generation (GWh)"
         }
-    },
-    "Hello": {
-        "original_file": "collection_1_property_214.csv",
-        "dimensions": {
-            "year": "year",
-            "month": "month",
-            "day": "day",
-            "hour": "hour",
-            "Dim1": "category_name",
-            "val": "value"
-        }
     }
 }
