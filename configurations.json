@@ -1,5 +1,5 @@
 {
-    "cap": {
+    "InstalledCapacity": {
         "original_file": "Generators.csv",
         "dimensions": {
             "Dim1": "collection_name",
@@ -7,7 +7,7 @@
             "month": "month",
             "day": 31,
             "hour": "hour",
-            "val": "Generation (GWh)"
+            "val": "Installed Capacity (MW)"
         }
     }
 }

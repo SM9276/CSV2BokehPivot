@@ -118,6 +118,18 @@ class CSVProcessorApp:
 
         def add_dimension():
             nonlocal dimension_count
+            if dimension_count == 1:
+                # Ensure Dim1 is added first
+                selected_index = column_listbox.curselection()
+                if selected_index:
+                    dimensions[f"Dim{dimension_count}"] = columns[selected_index[0]]
+                    dimension_count += 1
+                    messagebox.showinfo("Info", f"Dimension {dimension_count - 1} (Dim1) added successfully!")
+                else:
+                    messagebox.showerror("Error", "No column selected for Dim1.")
+                return
+
+            # Add additional dimensions
             selected_index = column_listbox.curselection()
             if selected_index:
                 dimensions[f"Dim{dimension_count}"] = columns[selected_index[0]]
@@ -140,6 +152,19 @@ class CSVProcessorApp:
                 messagebox.showerror("Error", "No value column selected.")
 
         def finish_mapping():
+            # Ensure column order in configurations
+            ordered_dimensions = {}
+            if "Dim1" in dimensions:
+                ordered_dimensions["Dim1"] = dimensions["Dim1"]
+            for key in ["year", "month", "day", "hour"]:
+                if key in dimensions:
+                    ordered_dimensions[key] = dimensions[key]
+            if "val" in dimensions:
+                ordered_dimensions["val"] = dimensions["val"]
+            for key, value in dimensions.items():
+                if key.startswith("Dim") and key != "Dim1":
+                    ordered_dimensions[key] = value
+
             new_file_name = simpledialog.askstring("File Name", "Enter the new file name (without extension):")
             if not new_file_name:
                 messagebox.showerror("Error", "Invalid file name.")
@@ -147,7 +172,7 @@ class CSVProcessorApp:
 
             self.configurations[new_file_name] = {
                 "original_file": os.path.basename(file_path),
-                "dimensions": dimensions
+                "dimensions": ordered_dimensions
             }
             save_configurations(self.configurations)
             mapping_window.destroy()
@@ -209,57 +234,33 @@ class CSVProcessorApp:
         log_text.insert(tk.END, "Starting file processing...\n")
         log_text.yview(tk.END)
 
-        # Iterate through all files in the input folder
         for full_path in all_csv_files:
             file_name = os.path.basename(full_path)
             log_text.insert(tk.END, f"Processing file: {file_name}\n")
             log_text.yview(tk.END)
 
             for new_file_name, config in configurations.items():
-                if config["original_file"] == file_name:
-                    log_text.insert(tk.END, f"Found configuration for {file_name}. Processing...\n")
-                    log_text.yview(tk.END)
+                if config['original_file'] == file_name:
                     df = pd.read_csv(full_path)
-                    new_df = pd.DataFrame()
-                    dimensions = config["dimensions"]
+                    mapped_df = pd.DataFrame()
 
-                    for key, column_name in dimensions.items():
-                        if key.startswith("Dim"):
-                            if column_name in df.columns:
-                                new_df[key] = df[column_name]
-                            else:
-                                new_df[key] = [column_name] * len(df)
-                        elif key in ["year", "month", "day", "hour"]:
-                            if column_name in df.columns:
-                                new_df[key] = df[column_name]
-                            else:
-                                new_df[key] = [column_name] * len(df)
-
-                    if "val" in dimensions:
-                        value_col = dimensions["val"]
-                        if value_col in df.columns:
-                            new_df[value_col] = df[value_col]
+                    for dim, col in config['dimensions'].items():
+                        if col in df.columns:
+                            mapped_df[dim] = df[col]
                         else:
-                            new_df[value_col] = [value_col] * len(df)
+                            mapped_df[dim] = col  # Assign constant values
 
-                    original_folder = os.path.dirname(full_path)
-                    relative_folder = os.path.relpath(original_folder, INPUT_FOLDER)
-                    output_folder = os.path.join(OUTPUT_FOLDER, relative_folder, 'outputs')
-
-                    # Create the output folder if it doesn't exist
-                    os.makedirs(output_folder, exist_ok=True)
-
-                    # Save the new dataframe as a CSV file
-                    output_file_path = os.path.join(output_folder, f"{new_file_name}.csv")
-                    new_df.to_csv(output_file_path, index=False)
-                    log_text.insert(tk.END, f"File saved to {output_file_path}\n")
+                    output_file = os.path.join(OUTPUT_FOLDER, f"{new_file_name}.csv")
+                    mapped_df.to_csv(output_file, index=False)
+                    log_text.insert(tk.END, f"Output saved to: {output_file}\n")
                     log_text.yview(tk.END)
 
-        messagebox.showinfo("Success", "Execution complete!")
+        log_text.insert(tk.END, "Processing complete.\n")
+        log_text.yview(tk.END)
 
 
-# Set up Tkinter
-root = tk.Tk()
-app = CSVProcessorApp(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CSVProcessorApp(root)
+    root.mainloop()
 
