@@ -1,13 +1,13 @@
 {
-    "InstalledCapacity": {
-        "original_file": "Generators.csv",
+    "gener": {
+        "original_file": "collection_1_property_2.csv",
         "dimensions": {
-            "Dim1": "collection_name",
+            "Dim1": "category_name",
             "year": "year",
             "month": "month",
-            "day": 31,
+            "day": "day",
             "hour": "hour",
-            "val": "Installed Capacity (MW)"
+            "val": "value"
         }
     }
 }

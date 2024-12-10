@@ -23,6 +23,15 @@ def save_configurations(configurations):
         json.dump(configurations, file, indent=4)
 
 
+def list_all_unique_csv_files(folder):
+    """List all unique CSV files in the folder based on their names."""
+    unique_files = {}
+    for root, _, files in os.walk(folder):
+        for file in files:
+            if file.endswith('.csv'):
+                unique_files[file] = os.path.join(root, file)
+    return unique_files
+
 def list_all_csv_files_with_repeats(folder):
     """List all CSV files in the folder, including those with duplicate names."""
     csv_files = []
@@ -59,8 +68,8 @@ class CSVProcessorApp:
         self.btn_exit.pack(pady=10)
 
     def mapping_mode(self):
-        csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
-        if not csv_files:
+        unique_csv_files = list_all_unique_csv_files(INPUT_FOLDER)
+        if not unique_csv_files:
             messagebox.showerror("Error", "No CSV files found in the 'inputs' folder.")
             return
 
@@ -73,9 +82,9 @@ class CSVProcessorApp:
         listbox.pack(pady=10)
 
         # Populate Listbox
-        file_names = list(csv_files)
+        file_names = list(unique_csv_files.keys())
         for file in file_names:
-            listbox.insert(tk.END, os.path.basename(file))
+            listbox.insert(tk.END, file)
 
         def select_file():
             selected_index = listbox.curselection()
@@ -84,8 +93,9 @@ class CSVProcessorApp:
                 return
 
             selected_file = file_names[selected_index[0]]
+            selected_file_path = unique_csv_files[selected_file]
             file_selection_window.destroy()
-            self.configure_mapping(selected_file)
+            self.configure_mapping(selected_file_path)
 
         tk.Button(file_selection_window, text="Select", command=select_file).pack(pady=5)
 
@@ -118,6 +128,18 @@ class CSVProcessorApp:
 
         def add_dimension():
             nonlocal dimension_count
+            if dimension_count == 1:
+                # Ensure Dim1 is added first
+                selected_index = column_listbox.curselection()
+                if selected_index:
+                    dimensions[f"Dim{dimension_count}"] = columns[selected_index[0]]
+                    dimension_count += 1
+                    messagebox.showinfo("Info", f"Dimension {dimension_count - 1} (Dim1) added successfully!")
+                else:
+                    messagebox.showerror("Error", "No column selected for Dim1.")
+                return
+
+            # Add additional dimensions
             selected_index = column_listbox.curselection()
             if selected_index:
                 dimensions[f"Dim{dimension_count}"] = columns[selected_index[0]]
@@ -140,6 +162,19 @@ class CSVProcessorApp:
                 messagebox.showerror("Error", "No value column selected.")
 
         def finish_mapping():
+            # Ensure column order in configurations
+            ordered_dimensions = {}
+            if "Dim1" in dimensions:
+                ordered_dimensions["Dim1"] = dimensions["Dim1"]
+            for key in ["year", "month", "day", "hour"]:
+                if key in dimensions:
+                    ordered_dimensions[key] = dimensions[key]
+            if "val" in dimensions:
+                ordered_dimensions["val"] = dimensions["val"]
+            for key, value in dimensions.items():
+                if key.startswith("Dim") and key != "Dim1":
+                    ordered_dimensions[key] = value
+
             new_file_name = simpledialog.askstring("File Name", "Enter the new file name (without extension):")
             if not new_file_name:
                 messagebox.showerror("Error", "Invalid file name.")
@@ -147,7 +182,7 @@ class CSVProcessorApp:
 
             self.configurations[new_file_name] = {
                 "original_file": os.path.basename(file_path),
-                "dimensions": dimensions
+                "dimensions": ordered_dimensions
             }
             save_configurations(self.configurations)
             mapping_window.destroy()
@@ -255,11 +290,19 @@ class CSVProcessorApp:
                     log_text.insert(tk.END, f"File saved to {output_file_path}\n")
                     log_text.yview(tk.END)
 
+                    # Create a dummy file named BP.csv
+                    dummy_file_path = os.path.join(output_folder, "BP.csv")
+                    with open(dummy_file_path, 'w') as dummy_file:
+                        dummy_file.write("This is a dummy file for BP.csv.\n")
+                    log_text.insert(tk.END, f"Dummy file created at {dummy_file_path}\n")
+                    log_text.yview(tk.END)
+
         messagebox.showinfo("Success", "Execution complete!")
 
 
-# Set up Tkinter
-root = tk.Tk()
-app = CSVProcessorApp(root)
-root.mainloop()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CSVProcessorApp(root)
+    root.mainloop()
 
