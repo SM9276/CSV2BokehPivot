@@ -33,7 +33,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-python GUI.py
+python a.py
 
 # Keep the terminal open (if needed)
 exec bash

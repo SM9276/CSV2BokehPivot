@@ -1,4 +1,4 @@
-Dim1,year,month,day,hour,val
+Dim1,year,month,day,hour,Installed Capacity (MW)
 Generator,2023,12,31,12,25.0
 Generator,2024,12,31,12,25.0
 Generator,2025,12,31,12,25.0

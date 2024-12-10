@@ -220,7 +220,6 @@ class CSVProcessorApp:
         tk.Button(mappings_window, text="Delete Mapping", command=delete_mapping).pack(pady=5)
         tk.Button(mappings_window, text="View Mapping Details", command=view_mapping_details).pack(pady=5)
 
-
     def execute_mode(self):
         configurations = load_configurations()
         all_csv_files = list_all_csv_files_with_repeats(INPUT_FOLDER)
@@ -281,9 +280,16 @@ class CSVProcessorApp:
                     log_text.insert(tk.END, f"File saved to {output_file_path}\n")
                     log_text.yview(tk.END)
 
+                    # Create a dummy file named BP.csv
+                    dummy_file_path = os.path.join(output_folder, "BP.csv")
+                    with open(dummy_file_path, 'w') as dummy_file:
+                        dummy_file.write("This is a dummy file for BP.csv.\n")
+                    log_text.insert(tk.END, f"Dummy file created at {dummy_file_path}\n")
+                    log_text.yview(tk.END)
+
         messagebox.showinfo("Success", "Execution complete!")
 
-    
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = CSVProcessorApp(root)
