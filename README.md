@@ -25,6 +25,8 @@ CSV2BokehPivot is a Python application that allows you to process CSV files, map
    ```
 
 ## How to Use
+### 0. **Launch the Application**:
+   - Run `launch.bat` by double clicking the icon or running the script in the terminal.
 
 ### 1. **Mapping Mode**:
    - Click on the **Mapping Mode** button.
@@ -49,9 +51,9 @@ CSV2BokehPivot is a Python application that allows you to process CSV files, map
    - Input the folderpath leading to the runs folder in the searchbar.
    - Click on which dataset you would like to view, in the fakedata usecase it would be generation.
    - Inorder to use the pivot feature click operations
-    - First Operation: diffrences
-    - Operate Across: scenario
-    - Base: DemoData1
+   - First Operation: diffrences
+   - Operate Across: scenario
+   - Base: DemoData1
 
 ## Folder Structure
 
