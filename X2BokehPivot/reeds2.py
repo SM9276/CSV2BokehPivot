@@ -1740,6 +1740,10 @@ def generate_results_meta(runs_folder):
     print(f"Scanning folder: {runs_folder}")
     for root, _, files in os.walk(runs_folder):
         for file in files:
+            if file == 'BP.csv':
+                print(f"Skipping file: {file}")
+                continue
+
             if file.endswith('.csv'):
                 file_path = os.path.join(root, file)
                 print(f"Processing file: {file_path}")
